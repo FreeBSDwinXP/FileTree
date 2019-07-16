@@ -1,10 +1,11 @@
-#Node.js File TREE
+#Node.js APP File TREE
+___________________________________________________________________________________
 
 To start, go to the application folder such as ('cd /home/freebsdwinxp/WebDevelop');
 
 Command - node webServer;
 
-Launch - We send the full directory name to the command line such as ('node webServer /home/freebsdwinxp');
+Launch - We send the full directory name to the command line such as [node webServer '/home/freebsdwinxp'];
 
 After completing the script, a web page with a list of all objects in the specified path will automatically open
 
