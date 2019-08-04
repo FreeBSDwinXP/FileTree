@@ -34,45 +34,50 @@ const paramSql = {
 //Algoritm correct work APP
 connection.query(`DROP DATABASE IF EXISTS ${msqlPathUser}`)
     .then(result=>{
-        console.log(`OLD MySQL base ${msqlPathUser} deleted`)
-        return connection.query(`CREATE DATABASE ${msqlPathUser}`)
+        console.log(`STEP 1 - Database ${msqlPathUser} deleted if exists`);
+        console.log(`STEP 2 - Create clear Database ${msqlPathUser}`);
+        return connection.query(`CREATE DATABASE ${msqlPathUser}`);
     })
     .then(result=>{
-        console.log(`NEW MySQL Base ${msqlPathUser} created`)
-        connection.end()
-        return Promise.resolve(pool.query(sqlTable))
+        console.log(`Database ${msqlPathUser} created`);
+        console.log(`STEP 3 - Create Table objectsTree`);
+        connection.end();
+        return pool.query(sqlTable);
     })
     .then(result=>{
-        console.log(`Table created in MySQL Base ${msqlPathUser}`)
-        return Promise.resolve(explorePath(pathUser))
+        console.log(`Table created`);
+        console.log(`STEP 4 - Start explore PATH ${pathUser}`);
+        return explorePath(pathUser);
     })
     .then(result=>{
-        return pool.execute("SELECT * FROM objectsTree")
+        console.log(`Path scan DONE`);
+        console.log('STEP 5 - Database query');
+        return pool.execute("SELECT * FROM objectsTree");
     })
     .then(result=>{
-  	console.log(result[1]);
-  	console.log(array);
-        return setTimeout(function(){JsonTree(array)}, 2000)
+        console.log(result[0]);
+        console.log('STEP 6 - RUN JSON create');
+        return JsonTree(array);
     })
     .then(result=>{
-        return WEB(8080)
+        console.log('STEP 7 - RUN WEB-server');
+        return WEB(8080);
     })
     .catch(function(err) {
+        console.log('error!!');
         console.log(err.message);
     });
 
 
 //Recursive Search Function
 function explorePath (startPath, parent = "") {
-    let ArrRes = fs.readdir(startPath, function(err, items) {
-        console.log(`Number of Objects in path ${startPath} are ${items.length} ${String.fromCharCode(0x25BC)}`);
-        console.log('===============================');
-        if (items.length == 0) {
-            return console.log(`${startPath} is empty`)
-        } else {
-        	let new_items = items.map(function (item) {
+    return new Promise((res, rej) => {
+        fs.readdir(startPath, function(err, items) {
+          if (err) {
+              return rej(err);
+          }
+          items.map(function (item) {
             positionId += 1; 
-        	console.log(`item is ${item}`);
         	let levelUpPath = path.dirname(startPath),
                 type = 'File',
                 Objec = {};
@@ -92,26 +97,23 @@ function explorePath (startPath, parent = "") {
             pool.query(sqlAddDataFile, function(err, results) {
                 if(err) {
                     console.log(err);
-                } else {
-                    console.log(`New object added to objectsTree Table`);
-                    }
-                });
-				return Objec;
+                }
+            });
         	});
-            return new_items;}
+          return res(items);
         });
-    return ArrRes;
-}
-
+      });
+    }
 
 //Transform array to JSON file
 function JsonTree (file) {
-	let json = JSON.stringify(file);
-	fs.writeFile('jsonExport.json', json, function(err) {
-		if (err) throw err;
-		return console.log('/////////////JSON-complete//////////////////');
-		}
-	);
+    let json = JSON.stringify(file);
+    return new Promise((resolve, reject) => {
+        fs.writeFile('jsonExport.json', json, function(err, data) {
+          if (err) throw err;
+          return resolve(console.log("JSON file create"));
+        });
+      });
 }	
 
 //WEB SERVER
@@ -135,8 +137,3 @@ function WEB (port){
     await open(`http://127.0.0.1:${port}/index.html`);})()
     });
 }
-
-
-
-
-
